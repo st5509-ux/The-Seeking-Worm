@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELT Interactive Vocabulary Flashcards</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        },
+                        funYellow: '#FFD166',
+                        funCoral: '#FF6B6B',
+                        funGreen: '#06D6A0',
+                        funPurple: '#118AB2',
+                    },
+                    fontFamily: {
+                        sans: ['Fredoka', 'Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Fredoka', 'Quicksand', sans-serif;
+            background-color: #f4f7fe;
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
+
+        /* 3D Card Flip Animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .pulse-audio {
+            animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 14px rgba(14, 165, 233, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-gradient-to-tr from-brand-500 to-funGreen rounded-2xl flex items-center justify-center text-white text-xl shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 tracking-wide leading-none">English Kids Hub</h1>
+                    <span class="text-xs text-brand-600 font-semibold uppercase tracking-wider">UK Accent Flashcards (30 Words)</span>
+                </div>
+            </div>
+
+            <!-- View Modes Switcher -->
+            <div class="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-sm font-semibold">
+                <button id="btnViewSingle" onclick="switchView('single')" class="px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 bg-white text-brand-600 shadow-sm">
+                    <i class="fa-solid fa-clone"></i> Flashcard Mode
+                </button>
+                <button id="btnViewGrid" onclick="switchView('grid')" class="px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-border-all"></i> All Words (30)
+                </button>
+                <button id="btnViewQuiz" onclick="switchView('quiz')" class="px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-gamepad"></i> Quiz Game
+                </button>
+            </div>
+
+            <!-- Audio Voice Settings -->
+    <div class="flex items-center gap-2">
+        <button onclick="enableAudioAndSpeak()" class="px-3 py-1.5 rounded-xl bg-funGreen hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5" title="Activate Audio Engine">
+            <i class="fa-solid fa-volume-high"></i> Enable Sound
+        </button>
+        <select id="voiceSelect" class="bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 max-w-[150px]">
+            <option value="">Default Voice</option>
+        </select>
+    </div>
+</div>
+</header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto w-full px-4 py-6 flex-grow flex flex-col justify-center">
+
+        <!-- VIEW 1: SINGLE FLASHCARD VIEW -->
+        <section id="viewSingle" class="flex flex-col items-center justify-center max-w-xl mx-auto w-full">
+            
+            <!-- Controls & Progress bar -->
+            <div class="w-full flex items-center justify-between mb-3 px-2">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Word <span id="currentCardNum" class="text-brand-600">1</span> of 30
+                </span>
+                <div class="flex items-center gap-3">
+                    <button id="btnAutoPlay" onclick="toggleAutoPlay()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-play text-brand-500"></i> Auto Play
+                    </button>
+                    <button onclick="toggleStarCurrent()" class="text-slate-400 hover:text-amber-400 text-lg transition-colors" title="Favorite this word">
+                        <i id="starIcon" class="fa-regular fa-star"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar Line -->
+            <div class="w-full bg-slate-200 h-2 rounded-full mb-6 overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-brand-500 to-funGreen h-full w-[3.33%] transition-all duration-300 rounded-full"></div>
+            </div>
+
+            <!-- 3D Flip Card -->
+            <div class="w-full h-[450px] perspective-1000 cursor-pointer" onclick="flipCard()">
+                <div id="cardInner" class="w-full h-full relative transform-style-3d transition-transform duration-500 shadow-xl rounded-3xl border border-slate-100 bg-white">
+                    
+                    <!-- FRONT SIDE OF CARD -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rounded-3xl p-6 flex flex-col items-center justify-between bg-gradient-to-b from-white via-white to-sky-50/50 border-4 border-white">
+                        
+                        <!-- Top Bar inside Card -->
+                        <div class="w-full flex items-center justify-between text-slate-400 text-sm">
+                            <span class="bg-brand-50 text-brand-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" id="cardCategory">Noun</span>
+                            <span class="text-xs text-slate-400 flex items-center gap-1">
+                                <i class="fa-solid fa-rotate"></i> Tap card to Flip
+                            </span>
+                        </div>
+
+                        <!-- Image Vector Graphic Container -->
+                        <div class="w-48 h-48 sm:w-56 sm:h-56 my-auto flex items-center justify-center p-2 relative group">
+                            <div class="absolute inset-0 bg-brand-100/40 rounded-full scale-90 group-hover:scale-100 transition-transform duration-300 -z-0"></div>
+                            <div id="cardImageGraphic" class="w-full h-full relative z-10 flex items-center justify-center drop-shadow-md transform group-hover:scale-105 transition-transform duration-300">
+                                <!-- SVG Graphic inserted dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Vocabulary Title & Sound Button -->
+                        <div class="w-full flex items-center justify-between bg-white/90 backdrop-blur p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <div class="text-left">
+                                <h2 id="cardWord" class="text-3xl font-extrabold text-slate-800 tracking-tight">Apple</h2>
+                                <p id="cardPhonetic" class="text-sm font-semibold text-brand-600 font-mono mt-0.5">/ˈæp.əl/</p>
+                            </div>
+
+                            <!-- Pronounce Sound Button -->
+                            <button onclick="event.stopPropagation(); speakCurrentWord();" class="w-14 h-14 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-brand-500/30 hover:scale-105 active:scale-95 transition-all pulse-audio" title="Pronounce Word">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- BACK SIDE OF CARD -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl p-6 flex flex-col justify-between bg-gradient-to-br from-slate-900 to-brand-700 text-white border-4 border-slate-800">
+                        
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-brand-400">Word Details & Meaning</span>
+                            <span class="text-xs text-slate-300"><i class="fa-solid fa-rotate"></i> Tap to Flip Back</span>
+                        </div>
+
+                        <!-- Expanded Educational Content -->
+                        <div class="my-auto space-y-4 text-left">
+                            <div>
+                                <span class="text-xs text-brand-300 font-bold uppercase">Definition</span>
+                                <p id="cardDefinition" class="text-lg font-medium text-slate-100 leading-snug">A round fruit with red or green skin and a firm white inside.</p>
+                            </div>
+
+                            <div class="bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+                                <span class="text-xs text-funYellow font-bold uppercase tracking-wider block mb-1">Example Sentence</span>
+                                <p id="cardSentence" class="text-base italic text-slate-200">"I eat a fresh red apple every morning."</p>
+                                <button onclick="event.stopPropagation(); speakSentence();" class="mt-2 text-xs font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-volume-low"></i> Listen Sentence
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                            <span>ELT Level: Beginner / A1</span>
+                            <button onclick="event.stopPropagation(); speakCurrentWord();" class="px-3 py-1.5 bg-brand-500/30 hover:bg-brand-500/50 rounded-xl text-white font-semibold transition-all">
+                                <i class="fa-solid fa-volume-high mr-1"></i> Repeat Sound
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Navigation Buttons Bottom -->
+            <div class="w-full flex items-center justify-between gap-4 mt-6">
+                <button onclick="prevCard()" class="flex-1 py-3 px-5 rounded-2xl bg-white border border-slate-200 hover:border-brand-500 text-slate-700 font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 group">
+                    <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i> Previous
+                </button>
+
+                <button onclick="speakCurrentWord()" class="py-3 px-6 rounded-2xl bg-funGreen hover:bg-emerald-500 text-white font-bold shadow-lg shadow-funGreen/20 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-volume-high text-lg"></i> Sound
+                </button>
+
+                <button onclick="nextCard()" class="flex-1 py-3 px-5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2 group">
+                    Next <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </div>
+        </section>
+
+
+        <!-- VIEW 2: GRID GALLERY VIEW -->
+        <section id="viewGrid" class="hidden">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Vocabulary Collection</h2>
+                    <p class="text-sm text-slate-500">Explore all 30 target words in your vocabulary library</p>
+                </div>
+                
+                <!-- Search & Category Filter -->
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchInput" oninput="filterGrid()" placeholder="Search word..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <select id="categoryFilter" onchange="filterGrid()" class="bg-white border border-slate-200 text-sm font-semibold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="all">All Categories</option>
+                        <option value="Objects">Objects</option>
+                        <option value="Body Parts">Body Parts</option>
+                        <option value="Food & Drinks">Food</option>
+                        <option value="Animals">Animals</option>
+                        <option value="Places">Places & Home</option>
+                        <option value="Clothing">Clothing</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid Container -->
+            <div id="gridContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- Rendered dynamically via JavaScript -->
+            </div>
+        </section>
+
+
+        <!-- VIEW 3: INTERACTIVE QUIZ GAME -->
+        <section id="viewQuiz" class="hidden max-w-2xl mx-auto w-full">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xl text-center relative overflow-hidden">
+                <!-- Background decorative shapes -->
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-funYellow/20 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-brand-500/20 rounded-full blur-2xl"></div>
+
+                <!-- Quiz Header -->
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Listening & Visual Quiz</span>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-bold text-funGreen"><i class="fa-solid fa-star text-amber-400"></i> Score: <span id="quizScore">0</span></span>
+                        <span class="text-sm font-bold text-brand-600">Question <span id="quizQuestionNum">1</span>/10</span>
+                    </div>
+                </div>
+
+                <!-- Quiz Main Question Area -->
+                <div class="mb-8">
+                    <span class="text-sm text-slate-500 font-semibold mb-2 block">Listen to the spoken word and pick the correct card:</span>
+                    
+                    <button id="quizSoundBtn" onclick="playQuizSound()" class="w-20 h-20 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-3xl mx-auto flex items-center justify-center shadow-lg shadow-brand-500/30 hover:scale-105 active:scale-95 transition-all my-4 pulse-audio">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    
+                    <h3 id="quizPromptText" class="text-xl font-bold text-slate-800 mt-2">Which word did you hear?</h3>
+                </div>
+
+                <!-- Quiz Options Grid -->
+                <div id="quizOptions" class="grid grid-cols-2 gap-4 mb-6">
+                    <!-- 4 Option cards rendered via JS -->
+                </div>
+
+                <!-- Feedback Banner -->
+                <div id="quizFeedback" class="hidden p-4 rounded-2xl text-center font-bold text-base transition-all mb-4"></div>
+
+                <!-- Next Question Button -->
+                <button id="btnNextQuiz" onclick="nextQuizQuestion()" class="hidden w-full py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-lg shadow-lg shadow-brand-500/25 transition-all">
+                    Next Question <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <p>© ELT Interactive Learning Tools — 30 Target Vocabulary Words</p>
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-volume-high text-brand-500"></i> Speech Audio Enabled</span>
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-mobile-screen-button text-brand-500"></i> Touch & Mobile Ready</span>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+    // --- GLOBAL STATE VARIABLES ---
+    let currentIndex = 0;
+    let isFlipped = false;
+    let isAutoPlaying = false;
+    let autoPlayTimer = null;
+    let starredWords = new Set();
+    let quizScore = 0;
+    let quizCurrentIndex = 0;
+    let quizQuestions = [];
+    let currentQuizAnswer = null;
+
+    // Target 30 Vocabulary Array
+    const vocabularyData = [
+        { id: 1, word: "Apple", phonetic: "/ˈæp.əl/", category: "Food & Drinks", definition: "A round fruit with red or green skin and firm white flesh.", sentence: "I eat a sweet red apple every day." },
+        { id: 2, word: "Arm", phonetic: "/ɑːm/", category: "Body Parts", definition: "The part of your body between your shoulder and wrist.", sentence: "Raise your right arm up high." },
+        { id: 3, word: "Bag", phonetic: "/bæɡ/", category: "Objects", definition: "A container used to carry school supplies and books.", sentence: "Put your yellow bag on the chair." },
+        { id: 4, word: "Banana", phonetic: "/bəˈnɑː.nə/", category: "Food & Drinks", definition: "A long curved yellow fruit with soft sweet flesh.", sentence: "Monkeys love to eat yellow bananas." },
+        { id: 5, word: "Bathroom", phonetic: "/ˈbɑːθ.ruːm/", category: "Places", definition: "A room with a bath, shower, and toilet.", sentence: "Wash your hands in the bathroom." },
+        { id: 6, word: "Bed", phonetic: "/bed/", category: "Objects", definition: "A piece of furniture that you sleep on.", sentence: "Go to bed early tonight." },
+        { id: 7, word: "Board", phonetic: "/bɔːd/", category: "Objects", definition: "A surface in a classroom used by the teacher for writing.", sentence: "Look at the chalkboard on the wall." },
+        { id: 8, word: "Book", phonetic: "/bʊk/", category: "Objects", definition: "Pages bound together that you read to learn stories.", sentence: "Open your English book to page ten." },
+        { id: 9, word: "Clock", phonetic: "/klɒk/", category: "Objects", definition: "An instrument that shows what time it is.", sentence: "The clock on the wall says eight o'clock." },
+        { id: 10, word: "Duck", phonetic: "/dʌk/", category: "Animals", definition: "A water bird with a broad beak and short legs.", sentence: "The yellow duck swims in the pond." },
+        { id: 11, word: "Eye", phonetic: "/aɪ/", category: "Body Parts", definition: "The body part you use to see things around you.", sentence: "Close your eyes and make a wish." },
+        { id: 12, word: "Frog", phonetic: "/frɒɡ/", category: "Animals", definition: "A small green animal with long legs that jumps.", sentence: "The green frog hops across the grass." },
+        { id: 13, word: "Glasses", phonetic: "/ˈɡlɑː.sɪz/", category: "Clothing", definition: "Lenses worn in front of eyes to help you see clearly.", sentence: "She wears bright orange glasses to read." },
+        { id: 14, word: "Grapes", phonetic: "/ɡreɪps/", category: "Food & Drinks", definition: "Small round purple or green fruits growing in bunches.", sentence: "We picked sweet purple grapes from the vine." },
+        { id: 15, word: "Hand", phonetic: "/hænd/", category: "Body Parts", definition: "The end part of a person's arm with fingers.", sentence: "Wave your hand to say hello!" },
+        { id: 16, word: "Hat", phonetic: "/hæt/", category: "Clothing", definition: "A covering for the head worn for warmth or fashion.", sentence: "Wear a yellow hat on sunny days." },
+        { id: 17, word: "Head", phonetic: "/hed/", category: "Body Parts", definition: "The top part of your body containing your brain and face.", sentence: "Nod your head if you agree." },
+        { id: 18, word: "Horse", phonetic: "/hɔːs/", category: "Animals", definition: "A large four-legged animal that people ride.", sentence: "The horse runs fast in the green field." },
+        { id: 19, word: "Jacket", phonetic: "/ˈdʒæk.ɪt/", category: "Clothing", definition: "A short coat worn for warmth outdoors.", sentence: "Put on your red jacket when going outside." },
+        { id: 20, word: "Kitchen", phonetic: "/ˈkɪtʃ.ən/", category: "Places", definition: "A room used for cooking meals and preparing food.", sentence: "Mom cooks dinner in the kitchen." },
+        { id: 21, word: "Leg", phonetic: "/leɡ/", category: "Body Parts", definition: "Each of the limbs on which a person or animal stands.", sentence: "Stand up on your left leg." },
+        { id: 22, word: "Orange", phonetic: "/ˈɒr.ɪndʒ/", category: "Food & Drinks", definition: "A round citrus fruit with a tough bright orange skin.", sentence: "Drink a fresh glass of orange juice." },
+        { id: 23, word: "Page", phonetic: "/peɪdʒ/", category: "Objects", definition: "One side of a sheet of paper in a book.", sentence: "Turn to the next page of your notebook." },
+        { id: 24, word: "Peas", phonetic: "/piːz/", category: "Food & Drinks", definition: "Small round green seeds eaten as a vegetable.", sentence: "Green peas are good for your health." },
+        { id: 25, word: "Pen", phonetic: "/pen/", category: "Objects", definition: "An instrument used for writing with ink.", sentence: "Write your name with a fountain pen." },
+        { id: 26, word: "Ruler", phonetic: "/ˈruː.lə/", category: "Objects", definition: "A straight strip used to measure distances and draw lines.", sentence: "Use a yellow ruler to draw straight lines." },
+        { id: 27, word: "Sheep", phonetic: "/ʃiːp/", category: "Animals", definition: "A farm animal with thick woolly coat.", sentence: "The fluffy white sheep eats soft grass." },
+        { id: 28, word: "Skirt", phonetic: "/skɜːt/", category: "Clothing", definition: "A woman's or girl's garment hanging from the waist.", sentence: "She wears a colorful skirt to school." },
+        { id: 29, word: "Tiger", phonetic: "/ˈtaɪ.ɡə/", category: "Animals", definition: "A large wild cat with yellow and black stripes.", sentence: "The baby tiger cub has soft orange fur." },
+        { id: 30, word: "Window", phonetic: "/ˈwɪn.dəʊ/", category: "Objects", definition: "An opening in a wall fitted with glass to see outside.", sentence: "Look through the window at the sunshine." }
+    ];
+
+    // Image Dictionary updated with the new links from document #2
+    const imageDictionary = {
+        Apple: "https://i.pinimg.com/736x/61/24/d3/6124d34cd3f2ce34062ce8cb1addeb4c.jpg",
+        Arm: "https://i.pinimg.com/1200x/24/c8/f6/24c8f6ce90bbd07b30295eaf1343d02b.jpg",
+        Bag: "https://i.pinimg.com/1200x/07/a5/e1/07a5e130b021348a4c1a3009e0bb119e.jpg",
+        Banana: "https://i.pinimg.com/1200x/67/06/1a/67061ad0d38caa7a7818a41b4dbae15a.jpg",
+        Bathroom: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1TEgUsHpvrsVOmc47RUor6B-HUKa5ewh3t5TMhsYlr5EY5f9CiaR9DFNK&s=10",
+        Bed: "https://www.shutterstock.com/image-vector/bed-vector-flat-cartoon-style-260nw-2732948273.jpg",
+        Board: "https://i.pinimg.com/736x/70/53/cf/7053cf36d786e14f51514133e82abccc.jpg",
+        Book: "https://i.pinimg.com/736x/f1/bb/21/f1bb2115bcd93930f57aaf82c773747e.jpg",
+        Clock: "https://st3.depositphotos.com/6664576/16521/v/450/depositphotos_165218098-stock-illustration-illustration-of-alarm-clock.jpg",
+        Duck: "https://static.vecteezy.com/system/resources/thumbnails/045/705/122/small/cute-duck-cartoon-illustration-vector.jpg",
+        Eye: "https://static.vecteezy.com/system/resources/previews/007/487/607/non_2x/drawing-of-an-open-eye-flat-illustration-icon-sticker-vector.jpg",
+        Frog: "https://i.pinimg.com/736x/d2/b2/ce/d2b2ce0ee7c7d93beaa0f2122f922a65.jpg",
+        Glasses: "https://i.pinimg.com/1200x/51/b6/7a/51b67a654dce320fa46efcbf2e59310f.jpg",
+        Grapes: "https://i.pinimg.com/736x/c2/7f/c2/c27fc24a7cb37a8e3a4bbfb83805c5a2.jpg",
+        Hand: "https://cdn.pixabay.com/photo/2021/11/14/22/25/hand-6795918_1280.png",
+        Hat: "https://cdn.pixabay.com/photo/2022/11/20/20/53/hat-7605221_1280.png",
+        Head: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ04xNRPwBq8N5npP4d0nWXryydK569HykQ0K7dfMr5gQ&s",
+        Horse: "https://i.pinimg.com/1200x/89/f9/d7/89f9d747b8ee67fcdb9d9a98d79930e4.jpg",
+        Jacket: "https://img.magnific.com/vector-premium/chaqueta_1271422-11651.jpg?semt=ais_hybrid&w=740&q=80",
+        Kitchen: "https://i.pinimg.com/1200x/0b/93/3c/0b933c2f54edab8d8019f1fe1097f9ce.jpg",
+        Leg: "https://i.pinimg.com/736x/68/7d/30/687d30dccea8c3f51f85ea0093dd90ea.jpg",
+        Orange: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAE6LhpFq_DXJxcMUv3OqRCgcrrlfZrcRCrUgdvngnkA&s=10",
+        Page: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgD-Spv5gLA8qzTYZOgHPTjiGm7W_KoLTb2kX9h-uXLixzKQ1EVpL9_9Xp&s=10",
+        Peas: "https://img.magnific.com/free-vector/isolated-green-peas-cartoon_1308-130176.jpg?semt=ais_hybrid&w=740&q=80",
+        Pen: "https://www.shutterstock.com/image-vector/fountain-pen-cartoon-illustration-isolated-260nw-2645472427.jpg",
+        Ruler: "https://i.pinimg.com/736x/45/4f/c5/454fc5474f8ff4da1adf30a5b7d020be.jpg",
+        Sheep: "https://i.pinimg.com/1200x/6b/35/a3/6b35a3f1a22c4e2c0e0bb4bd0164a597.jpg",
+        Skirt: "https://i.pinimg.com/1200x/fb/7b/9a/fb7b9a377ae284738451d5da7a7a7c1f.jpg",
+        Tiger: "https://marketplace.canva.com/FsJ30/MAHSgRFsJ30/1/tl/canva-watercolor-illustration-of-a-cute-tiger-cub-MAHSgRFsJ30.png",
+        Window: "https://marketplace.canva.com/laRuk/MAG59nlaRuk/1/tl/canva-ilustraci%C3%B3n-de-una-ventana-con-cortinas-y-plantas-MAG59nlaRuk.png"
+    };
+
+    function getImgTag(word, extraClasses = "w-full h-full object-contain") {
+        const url = imageDictionary[word];
+        const placeholderUrl = `https://placehold.co/300x300/e0f2fe/0284c7?text=${encodeURIComponent(word)}`;
+        
+        if (!url) {
+            return `<img src="${placeholderUrl}" alt="${word}" class="${extraClasses}">`;
+        }
+        
+        return `<img src="${url}" alt="${word}" loading="lazy" class="${extraClasses}" onerror="this.onerror=null; this.src='${placeholderUrl}';">`;
+    }
+
+    // --- ENHANCED BRITISH AUDIO SPEECH ENGINE ---
+    const synth = window.speechSynthesis;
+    let availableVoices = [];
+    let selectedUkVoiceIndex = -1;
+    let audioContext = null;
+
+    function playBeepTone() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, audioContext.currentTime); // D5 note
+            gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.25);
+        } catch(e) {}
+    }
+
+    function initVoiceSelector() {
+        const voiceSelect = document.getElementById('voiceSelect');
+        if (!voiceSelect) return;
+
+        function loadVoices() {
+            availableVoices = synth.getVoices().filter(v => v.lang.startsWith('en'));
+            voiceSelect.innerHTML = '';
+            
+            let ukVoiceIndex = -1;
+
+            availableVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                const isUK = voice.lang === 'en-GB' || voice.name.includes('UK') || voice.name.includes('United Kingdom') || voice.name.includes('British');
+                
+                option.textContent = `${isUK ? '🇬🇧 ' : ''}${voice.name} (${voice.lang})`;
+                
+                if (isUK && ukVoiceIndex === -1) {
+                    ukVoiceIndex = index;
+                    option.selected = true;
+                }
+                voiceSelect.appendChild(option);
+            });
+
+            if (ukVoiceIndex !== -1) {
+                selectedUkVoiceIndex = ukVoiceIndex;
+            } else if (availableVoices.length > 0) {
+                selectedUkVoiceIndex = 0;
+            }
+        }
+
+        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }
+
+    function speakText(text, rate = 0.8) {
+        if (!('speechSynthesis' in window)) {
+            playBeepTone();
+            return;
+        }
+
+        try {
+            window.speechSynthesis.cancel(); // Clear stuck speech utterances
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-GB'; // Enforce British English accent
+            utterance.rate = rate;
+            utterance.pitch = 1.0;
+            
+            const voiceSelect = document.getElementById('voiceSelect');
+            if (voiceSelect && voiceSelect.value !== "" && availableVoices[voiceSelect.value]) {
+                utterance.voice = availableVoices[voiceSelect.value];
+            } else if (selectedUkVoiceIndex !== -1 && availableVoices[selectedUkVoiceIndex]) {
+                utterance.voice = availableVoices[selectedUkVoiceIndex];
+            }
+
+            utterance.onerror = function() {
+                playBeepTone();
+            };
+
+            window.speechSynthesis.speak(utterance);
+        } catch(err) {
+            playBeepTone();
+        }
+    }
+
+    function enableAudioAndSpeak() {
+        speakCurrentWord();
+    }
+
+    function speakCurrentWord() {
+        const word = vocabularyData[currentIndex].word;
+        speakText(word, 0.8);
+    }
+
+    function speakSentence() {
+        const sentence = vocabularyData[currentIndex].sentence;
+        speakText(sentence, 0.85);
+    }
+
+    // --- SINGLE CARD RENDER & NAVIGATION ---
+    function renderSingleCard() {
+            const item = vocabularyData[currentIndex];
+            
+            document.getElementById('currentCardNum').textContent = currentIndex + 1;
+            document.getElementById('cardWord').textContent = item.word;
+            document.getElementById('cardPhonetic').textContent = item.phonetic;
+            document.getElementById('cardCategory').textContent = item.category;
+            document.getElementById('cardDefinition').textContent = item.definition;
+            document.getElementById('cardSentence').textContent = `"${item.sentence}"`;
+            
+            // Render clean image tag from the provided URLs
+            const imgContainer = document.getElementById('cardImageGraphic');
+            imgContainer.innerHTML = getImgTag(item.word, "max-h-full max-w-full object-contain drop-shadow-md");
+
+            // Update Progress Bar
+            const progressPercent = ((currentIndex + 1) / vocabularyData.length) * 100;
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+
+            // Reset flip state
+            if (isFlipped) {
+                flipCard();
+            }
+
+            // Update Star Icon
+            updateStarUI();
+        }
+
+        function flipCard() {
+            const cardInner = document.getElementById('cardInner');
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                cardInner.classList.add('rotate-y-180');
+            } else {
+                cardInner.classList.remove('rotate-y-180');
+            }
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % vocabularyData.length;
+            renderSingleCard();
+            speakCurrentWord();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + vocabularyData.length) % vocabularyData.length;
+            renderSingleCard();
+            speakCurrentWord();
+        }
+
+        function toggleAutoPlay() {
+            const btn = document.getElementById('btnAutoPlay');
+            if (isAutoPlaying) {
+                clearInterval(autoPlayTimer);
+                isAutoPlaying = false;
+                btn.classList.remove('bg-brand-500', 'text-white');
+                btn.classList.add('bg-white', 'text-slate-600');
+                btn.innerHTML = `<i class="fa-solid fa-play text-brand-500"></i> Auto Play`;
+            } else {
+                isAutoPlaying = true;
+                btn.classList.remove('bg-white', 'text-slate-600');
+                btn.classList.add('bg-brand-500', 'text-white');
+                btn.innerHTML = `<i class="fa-solid fa-pause"></i> Pause`;
+                
+                nextCard();
+                autoPlayTimer = setInterval(() => {
+                    nextCard();
+                }, 3500);
+            }
+        }
+
+        function toggleStarCurrent() {
+            const id = vocabularyData[currentIndex].id;
+            if (starredWords.has(id)) {
+                starredWords.delete(id);
+            } else {
+                starredWords.add(id);
+            }
+            updateStarUI();
+        }
+
+        function updateStarUI() {
+            const icon = document.getElementById('starIcon');
+            const id = vocabularyData[currentIndex].id;
+            if (starredWords.has(id)) {
+                icon.className = "fa-solid fa-star text-amber-400";
+            } else {
+                icon.className = "fa-regular fa-star text-slate-400";
+            }
+        }
+
+        // --- GRID GALLERY RENDER & SEARCH ---
+        function renderGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = "";
+
+            vocabularyData.forEach((item, idx) => {
+                const cardHtml = `
+                    <div onclick="selectWordFromGrid(${idx})" class="vocab-card bg-white rounded-2xl p-4 border border-slate-200 hover:border-brand-500 hover:shadow-lg transition-all cursor-pointer flex flex-col items-center justify-between group" data-category="${item.category}" data-word="${item.word.toLowerCase()}">
+                        <div class="w-full flex justify-between items-center mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">${item.category}</span>
+                            <button onclick="event.stopPropagation(); speakGridWord('${item.word}')" class="w-8 h-8 rounded-full bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-volume-high text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="w-20 h-20 my-2 group-hover:scale-110 transition-transform flex items-center justify-center overflow-hidden">
+                            ${getImgTag(item.word, "w-full h-full object-contain")}
+                        </div>
+
+                        <div class="text-center mt-1">
+                            <h3 class="font-extrabold text-slate-800 text-base group-hover:text-brand-600 transition-colors">${item.word}</h3>
+                            <p class="text-xs font-mono text-slate-400">${item.phonetic}</p>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        function speakGridWord(word) {
+            speakText(word, 0.85);
+        }
+
+        function selectWordFromGrid(index) {
+            currentIndex = index;
+            switchView('single');
+            renderSingleCard();
+            speakCurrentWord();
+        }
+
+        function filterGrid() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const cards = document.querySelectorAll('.vocab-card');
+
+            cards.forEach(card => {
+                const word = card.getAttribute('data-word');
+                const cardCat = card.getAttribute('data-category');
+
+                const matchesSearch = word.includes(search);
+                const matchesCat = (category === 'all') || (cardCat === category);
+
+                if (matchesSearch && matchesCat) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- VIEW SWITCHING ---
+        function switchView(view) {
+            document.getElementById('viewSingle').classList.add('hidden');
+            document.getElementById('viewGrid').classList.add('hidden');
+            document.getElementById('viewQuiz').classList.add('hidden');
+
+            document.getElementById('btnViewSingle').className = "px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 text-slate-600 hover:text-slate-900";
+            document.getElementById('btnViewGrid').className = "px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 text-slate-600 hover:text-slate-900";
+            document.getElementById('btnViewQuiz').className = "px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 text-slate-600 hover:text-slate-900";
+
+            if (view === 'single') {
+                document.getElementById('viewSingle').classList.remove('hidden');
+                document.getElementById('btnViewSingle').className = "px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 bg-white text-brand-600 shadow-sm font-bold";
+            } else if (view === 'grid') {
+                document.getElementById('viewGrid').classList.remove('hidden');
+                document.getElementById('btnViewGrid').className = "px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 bg-white text-brand-600 shadow-sm font-bold";
+            } else if (view === 'quiz') {
+                document.getElementById('viewQuiz').classList.remove('hidden');
+                document.getElementById('btnViewQuiz').className = "px-4 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 bg-white text-brand-600 shadow-sm font-bold";
+                startQuiz();
+            }
+        }
+
+        // --- QUIZ GAME LOGIC ---
+        function startQuiz() {
+            quizScore = 0;
+            quizCurrentIndex = 0;
+            document.getElementById('quizScore').textContent = "0";
+            quizQuestions = [...vocabularyData].sort(() => 0.5 - Math.random()).slice(0, 10);
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            document.getElementById('quizFeedback').classList.add('hidden');
+            document.getElementById('btnNextQuiz').classList.add('hidden');
+
+            if (quizCurrentIndex >= quizQuestions.length) {
+                // Quiz Complete Screen
+                document.getElementById('quizPromptText').textContent = ` 🎉 Great Job! You completed the quiz with a score of ${quizScore}/10!`;
+                document.getElementById('quizOptions').innerHTML = `
+                    <button onclick="startQuiz()" class="col-span-2 py-4 rounded-2xl bg-brand-500 text-white font-bold text-lg hover:bg-brand-600 transition-all shadow-lg">
+                        Play Again <i class="fa-solid fa-rotate-right ml-2"></i>
+                    </button>
+                `;
+                return;
+            }
+
+            const current = quizQuestions[quizCurrentIndex];
+            currentQuizAnswer = current;
+            document.getElementById('quizQuestionNum').textContent = quizCurrentIndex + 1;
+            document.getElementById('quizPromptText').textContent = "Listen to the word and select the matching picture!";
+
+            playQuizSound();
+
+            let distractors = vocabularyData.filter(item => item.id !== current.id)
+                                             .sort(() => 0.5 - Math.random())
+                                             .slice(0, 3);
+            let options = [current, ...distractors].sort(() => 0.5 - Math.random());
+
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = "";
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn bg-slate-50 border-2 border-slate-200 hover:border-brand-500 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:shadow-md group";
+                btn.onclick = () => checkQuizAnswer(opt, btn);
+
+                btn.innerHTML = `
+                    <div class="w-16 h-16 mb-2 group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden">
+                        ${getImgTag(opt.word, "w-full h-full object-contain")}
+                    </div>
+                    <span class="font-bold text-slate-700 group-hover:text-brand-600">${opt.word}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function playQuizSound() {
+            if (currentQuizAnswer) {
+                speakText(currentQuizAnswer.word, 0.85);
+            }
+        }
+
+        function checkQuizAnswer(selectedOption, buttonEl) {
+            const feedback = document.getElementById('quizFeedback');
+            feedback.classList.remove('hidden');
+
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (selectedOption.id === currentQuizAnswer.id) {
+                quizScore++;
+                document.getElementById('quizScore').textContent = quizScore;
+                buttonEl.classList.remove('bg-slate-50', 'border-slate-200');
+                buttonEl.classList.add('bg-emerald-50', 'border-emerald-500', 'ring-2', 'ring-emerald-400');
+                
+                feedback.className = "p-4 rounded-2xl text-center font-bold text-base bg-emerald-100 text-emerald-800 border border-emerald-300 mb-4";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-xl mr-2"></i> Correct! Excellent job!`;
+            } else {
+                buttonEl.classList.remove('bg-slate-50', 'border-slate-200');
+                buttonEl.classList.add('bg-rose-50', 'border-rose-500', 'ring-2', 'ring-rose-400');
+                
+                feedback.className = "p-4 rounded-2xl text-center font-bold text-base bg-rose-100 text-rose-800 border border-rose-300 mb-4";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 text-xl mr-2"></i> Not quite! The correct word was <strong>${currentQuizAnswer.word}</strong>.`;
+            }
+
+            document.getElementById('btnNextQuiz').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            quizCurrentIndex++;
+            renderQuizQuestion();
+        }
+
+        // Boot system initialization on page load
+        window.onload = function() {
+            initVoiceSelector();
+            renderSingleCard();
+            renderGrid();
+        };
+    </script>
+</body>
+</html>
